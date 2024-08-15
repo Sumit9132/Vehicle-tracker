@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vehicle Tracker</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+</head>
+<body>
+    <h1>Vehicle Tracker</h1>
+    <div id="map" style="height: 500px; width: 100%;"></div>
+
+    <script>
+        let map, vehicleMarker, vehiclePath;
+
+        function initMap() {
+            const initialLocation = { lat: 37.7749, lng: -122.4194 };
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 12,
+                center: initialLocation
+            });
+
+            vehicleMarker = new google.maps.Marker({
+                position: initialLocation,
+                map: map,
+                icon: 'https://maps.google.com/mapfiles/kml/shapes/cabs.png' // Vehicle icon
+            });
+
+            vehiclePath = new google.maps.Polyline({
+                path: [],
+                geodesic: true,
+                strokeColor: '#FF0000',
+                strokeOpacity: 1.0,
+                strokeWeight: 2
+            });
+
+            vehiclePath.setMap(map);
+            updateVehicleLocation();
+        }
+
+        function updateVehicleLocation() {
+            fetch('/vehicle-location')
+                .then(response => response.json())
+                .then(data => {
+                    const { currentLocation, vehicleRoute } = data;
+                    const position = new google.maps.LatLng(currentLocation.lat, currentLocation.lng);
+
+                    vehicleMarker.setPosition(position);
+                    map.setCenter(position);
+
+                    vehiclePath.setPath(vehicleRoute.map(loc => new google.maps.LatLng(loc.lat, loc.lng)));
+                })
+                .catch(error => console.error('Error:', error));
+
+            setTimeout(updateVehicleLocation, 5000); // Update every 5 seconds
+        }
+
+        initMap();
+    </script>
+</body>
+</html>
